@@ -27,12 +27,14 @@
 services:
   broker:
     image: docker.io/library/redis:7
+    container_name: pl-broker
     restart: unless-stopped
     volumes:
-      - redisdata:/data
+      - /media/Medien/Paperless/redisdata:/data
 
   webserver:
     image: ghcr.io/paperless-ngx/paperless-ngx:latest
+    container_name: pl-webserver
     restart: unless-stopped
     depends_on:
       - broker
@@ -41,19 +43,23 @@ services:
     ports:
       - "8810:8000"
     volumes:
-      - data:/usr/src/paperless/data
-      - media:/usr/src/paperless/media
-      - ./export:/usr/src/paperless/export
-      - ./consume:/usr/src/paperless/consume
+      - /media/Medien/Paperless/data:/usr/src/paperless/data
+      - /media/Medien/Paperless/media:/usr/src/paperless/media
+      - /media/Medien/Paperless/export:/usr/src/paperless/export
+      - /media/Medien/Paperless/consume:/usr/src/paperless/consume
     env_file: docker-compose.env
     environment:
       PAPERLESS_REDIS: redis://broker:6379
+      PAPERLESS_ADMIN_USER: admin
+      PAPERLESS_ADMIN_PASSWORD: 123456
+      PAPERLESS_CONSUMER_DELETE_DUPLICATES: 1
       PAPERLESS_TIKA_ENABLED: 1
       PAPERLESS_TIKA_GOTENBERG_ENDPOINT: http://gotenberg:3000
       PAPERLESS_TIKA_ENDPOINT: http://tika:9998
 
   gotenberg:
     image: docker.io/gotenberg/gotenberg:8.7
+    container_name: pl-gotenberg
     restart: unless-stopped
     # Die Gotenberg Chromium-Route wird zum Konvertieren von EML-Dateien verwendet. Externe Inhalte wie 
     # Tracking-Pixel oder JavaScript möchten wir nicht zulassen.
@@ -64,6 +70,7 @@ services:
 
   tika:
     image: docker.io/apache/tika:latest
+    container_name: pl-tika
     restart: unless-stopped
 
 volumes:
